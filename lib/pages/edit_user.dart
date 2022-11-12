@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 
 class EditUser extends StatefulWidget {
   const EditUser({super.key});
@@ -9,13 +10,36 @@ class EditUser extends StatefulWidget {
 
 class _EditUserState extends State<EditUser> {
   String gender = '';
+  bool firstNameVal = false;
+  String? chooseUserType;
   final userType = ['Admin', 'User'];
+  DateTime selected = DateTime.now();
+  DateFormat formatter = DateFormat('dd/MM/yyyy');
+  TextEditingController birthdayController = TextEditingController();
+  TextEditingController firstnameController = TextEditingController();
+  TextEditingController phoneController = TextEditingController();
+  TextEditingController lastnameController = TextEditingController();
+  TextEditingController statusController = TextEditingController();
+
+  _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+        context: context,
+        initialDate: selected,
+        firstDate: DateTime(1975, 8),
+        lastDate: DateTime(2101));
+    if (picked != null && picked != selected) {
+      setState(() {
+        selected = picked;
+        birthdayController.text = formatter.format(selected);
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text('Add User'),
+        title: Text('Edit User'),
         centerTitle: true,
         leading: IconButton(
           onPressed: () {
@@ -60,6 +84,7 @@ class _EditUserState extends State<EditUser> {
                 width: MediaQuery.of(context).size.width * 0.8,
                 height: 50,
                 child: DropdownButton(
+                  value: chooseUserType,
                   isExpanded: true,
                   hint: const Text('Select'),
                   items: userType
@@ -73,9 +98,35 @@ class _EditUserState extends State<EditUser> {
                         ),
                       )
                       .toList(),
-                  onChanged: (value) {},
+                  onChanged: (value) {
+                    setState(() {
+                      chooseUserType = value;
+                    });
+                  },
                 ),
-              )
+              ),
+              Container(
+                  width: MediaQuery.of(context).size.width * 0.8,
+                  child: ElevatedButton(
+                      onPressed: () {
+                        print('firstname: ${firstnameController.text}');
+                        print('lastname: ${lastnameController.text}');
+                        print('gender: ${gender}');
+                        print('birthday: ${birthdayController.text}');
+                        print('phoneNumber: ${phoneController.text}');
+                        print('status: ${chooseUserType}');
+
+                        if (firstnameController.text.isEmpty) {
+                          setState(() {
+                            firstNameVal = true;
+                          });
+                        } else {
+                          setState(() {
+                            firstNameVal = false;
+                          });
+                        }
+                      },
+                      child: Text('Edit'))),
             ],
           ),
         ),
@@ -88,6 +139,8 @@ class _EditUserState extends State<EditUser> {
       width: MediaQuery.of(context).size.width * 0.8,
       height: 50,
       child: TextFormField(
+        controller: phoneController,
+        keyboardType: TextInputType.number,
         decoration: InputDecoration(
             border: OutlineInputBorder(),
             label: Text('Phone'),
@@ -96,54 +149,75 @@ class _EditUserState extends State<EditUser> {
     );
   }
 
-  Container birthdayText(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.8,
-      height: 50,
-      child: TextFormField(
-        decoration: InputDecoration(
-            border: OutlineInputBorder(),
-            label: Text('Birthday'),
-            suffixIcon: Icon(Icons.calendar_month)),
+  Widget birthdayText(BuildContext context) {
+    return InkWell(
+      onTap: () => _selectDate(context),
+      child: Container(
+        width: MediaQuery.of(context).size.width * 0.8,
+        height: 50,
+        child: IgnorePointer(
+          child: TextFormField(
+            controller: birthdayController,
+            decoration: InputDecoration(
+                border: OutlineInputBorder(),
+                label: Text('Birthday'),
+                suffixIcon: Icon(Icons.calendar_month)),
+          ),
+        ),
       ),
     );
   }
 
-  Container genderRadio(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.8,
-      child: Row(
-        children: [
-          Row(
+  Widget genderRadio(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          height: 50,
+          width: MediaQuery.of(context).size.width * 0.8,
+          child: Row(
             children: [
-              Radio(
-                  value: 'Male',
-                  groupValue: gender,
-                  onChanged: (value) {
-                    setState(() {
-                      gender = value.toString();
-                    });
-                  }),
-              Text('Male')
+              Row(
+                children: [
+                  Radio(
+                      value: 'Male',
+                      groupValue: gender,
+                      onChanged: (value) {
+                        setState(() {
+                          gender = value.toString();
+                        });
+                      }),
+                  Text('Male')
+                ],
+              ),
+              const SizedBox(width: 30),
+              Row(
+                children: [
+                  Radio(
+                    value: 'Female',
+                    groupValue: gender,
+                    onChanged: (value) {
+                      setState(() {
+                        gender = value.toString();
+                      });
+                    },
+                  ),
+                  Text('Female'),
+                ],
+              )
             ],
           ),
-          const SizedBox(width: 30),
-          Row(
-            children: [
-              Radio(
-                value: 'Female',
-                groupValue: gender,
-                onChanged: (value) {
-                  setState(() {
-                    gender = value.toString();
-                  });
-                },
-              ),
-              Text('Female'),
-            ],
-          )
-        ],
-      ),
+        ),
+        gender == ""
+            ? Container(
+              width: MediaQuery.of(context).size.width * 0.8,
+                child: Row(
+                  children: [
+                    Text('Please select gender ',
+                        style: TextStyle(color: Colors.red)),
+                  ],
+                ))
+            : Container(),
+      ],
     );
   }
 
@@ -152,6 +226,7 @@ class _EditUserState extends State<EditUser> {
       width: MediaQuery.of(context).size.width * 0.8,
       height: 50,
       child: TextField(
+        controller: lastnameController,
         decoration: InputDecoration(
           border: OutlineInputBorder(),
           label: Text('LastName'),
@@ -160,16 +235,28 @@ class _EditUserState extends State<EditUser> {
     );
   }
 
-  Container firstNameTextfield(BuildContext context) {
-    return Container(
-      width: MediaQuery.of(context).size.width * 0.8,
-      height: 50,
-      child: TextField(
-        decoration: InputDecoration(
-          border: OutlineInputBorder(),
-          label: Text('FirstName'),
+  Widget firstNameTextfield(BuildContext context) {
+    return Column(
+      children: [
+        Container(
+          width: MediaQuery.of(context).size.width * 0.8,
+          height: 70,
+          child: TextField(
+            controller: firstnameController,
+            decoration: InputDecoration(
+              border: OutlineInputBorder(),
+              label: Text('FirstName'),
+              errorText: firstNameVal ? 'Please input first name' : null,
+            ),
+          ),
         ),
-      ),
+        // firstnameController.text.isEmpty
+        //     ? Text(
+        //         'Please input your firstname',
+        //         style: TextStyle(color: Colors.red),
+        //       )
+        //     : Container()
+      ],
     );
   }
 }
